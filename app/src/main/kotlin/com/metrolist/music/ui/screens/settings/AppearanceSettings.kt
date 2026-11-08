@@ -111,6 +111,7 @@ import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
 import com.metrolist.music.ui.theme.DefaultThemeColor
+import com.metrolist.music.ui.theme.PipeYellow
 import com.metrolist.music.ui.theme.PlayerSliderColors
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.IconUtils
@@ -129,7 +130,7 @@ fun AppearanceSettings(
     val (dynamicTheme, onDynamicThemeChange) =
         rememberPreference(
             DynamicThemeKey,
-            defaultValue = true,
+            defaultValue = false,
         )
     val (enableDynamicIcon, onEnableDynamicIconPrefChange) =
         rememberPreference(
@@ -154,7 +155,7 @@ fun AppearanceSettings(
     val (selectedThemeColorInt) =
         rememberPreference(
             SelectedThemeColorKey,
-            defaultValue = DefaultThemeColor.toArgb(),
+            defaultValue = PipeYellow.toArgb(),
         )
     // Check if user has selected a custom color (not the default/dynamic color)
     val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
@@ -201,7 +202,7 @@ fun AppearanceSettings(
     val (defaultOpenTab, onDefaultOpenTabChange) =
         rememberEnumPreference(
             DefaultOpenTabKey,
-            defaultValue = NavigationTab.HOME,
+            defaultValue = NavigationTab.DOWNLOADS,
         )
     val (playerButtonsStyle, onPlayerButtonsStyleChange) =
         rememberEnumPreference(
@@ -602,6 +603,7 @@ fun AppearanceSettings(
                     NavigationTab.HOME -> stringResource(R.string.home)
                     NavigationTab.SEARCH -> stringResource(R.string.search)
                     NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
+                    NavigationTab.DOWNLOADS -> stringResource(R.string.pipe_downloads_tab)
                 }
             },
         )
@@ -1569,6 +1571,7 @@ fun AppearanceSettings(
                                     NavigationTab.HOME -> stringResource(R.string.home)
                                     NavigationTab.SEARCH -> stringResource(R.string.search)
                                     NavigationTab.LIBRARY -> stringResource(R.string.filter_library)
+                                    NavigationTab.DOWNLOADS -> stringResource(R.string.pipe_downloads_tab)
                                 },
                             )
                         },
@@ -1883,6 +1886,7 @@ enum class NavigationTab {
     HOME,
     SEARCH,
     LIBRARY,
+    DOWNLOADS,
 }
 
 enum class LyricsPosition {

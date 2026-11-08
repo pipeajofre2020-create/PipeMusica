@@ -42,6 +42,7 @@ import com.metrolist.music.constants.AudioTrackPlaybackParamsKey
 import com.metrolist.music.constants.AudioQuality
 import com.metrolist.music.constants.AudioQualityKey
 import com.metrolist.music.constants.AutoDownloadOnLikeKey
+import com.metrolist.music.constants.DownloadOnlyOnWifiKey
 import com.metrolist.music.constants.CrossfadeDurationKey
 import com.metrolist.music.constants.CrossfadeEnabledKey
 import com.metrolist.music.constants.CrossfadeGaplessKey
@@ -172,7 +173,11 @@ fun PlayerSettings(
     )
     val (autoDownloadOnLike, onAutoDownloadOnLikeChange) = rememberPreference(
         AutoDownloadOnLikeKey,
-        defaultValue = false
+        defaultValue = true
+    )
+    val (downloadOnlyOnWifi, onDownloadOnlyOnWifiChange) = rememberPreference(
+        DownloadOnlyOnWifiKey,
+        defaultValue = true
     )
     val (similarContentEnabled, similarContentEnabledChange) = rememberPreference(
         key = SimilarContent,
@@ -871,6 +876,27 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { onAutoDownloadOnLikeChange(!autoDownloadOnLike) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.download),
+                    title = { Text(stringResource(R.string.pipe_wifi_only)) },
+                    description = { Text(stringResource(R.string.pipe_wifi_only_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = downloadOnlyOnWifi,
+                            onCheckedChange = onDownloadOnlyOnWifiChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (downloadOnlyOnWifi) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onDownloadOnlyOnWifiChange(!downloadOnlyOnWifi) }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.similar),

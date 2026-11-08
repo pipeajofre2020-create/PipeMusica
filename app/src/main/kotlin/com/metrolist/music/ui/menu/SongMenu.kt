@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.pipe.rememberCoverPicker
 import android.content.Intent
 import android.content.res.Configuration
 import android.widget.Toast
@@ -127,6 +128,14 @@ fun SongMenu(
     val listenTogetherManager = LocalListenTogetherManager.current
     val scope = rememberCoroutineScope()
     var refetchIconDegree by remember { mutableFloatStateOf(0f) }
+    // Pipe Música: custom cover for songs and videos
+    val pickSongCover =
+        rememberCoverPicker { coverUri ->
+            database.query {
+                update(song.song.copy(thumbnailUrl = coverUri))
+            }
+            onDismiss()
+        }
 
     val cacheViewModel = hiltViewModel<CachePlaylistViewModel>()
 
@@ -650,6 +659,17 @@ fun SongMenu(
                         } else {
                             null
                         },
+                        Material3MenuItemData(
+                            title = { Text(text = stringResource(R.string.pipe_change_cover)) },
+                            description = { Text(text = stringResource(R.string.pipe_change_cover_desc)) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.insert_photo),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = { pickSongCover() },
+                        ),
                     ),
             )
         }

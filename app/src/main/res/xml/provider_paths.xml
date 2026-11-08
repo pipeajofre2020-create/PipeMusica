@@ -3,6 +3,9 @@
     <external-path
         name="external_files"
         path="." />
+    <files-path
+        name="pipe_covers"
+        path="pipe_covers/" />
     <cache-path
         name="cache"
         path="." />

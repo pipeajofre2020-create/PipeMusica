@@ -6,6 +6,7 @@
 package com.metrolist.music
 
 import android.Manifest
+import com.metrolist.music.pipe.PipeFeatures
 import android.annotation.SuppressLint
 import android.app.ForegroundServiceStartNotAllowedException
 import android.app.PendingIntent
@@ -197,6 +198,7 @@ import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.NavigationTab
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
+import com.metrolist.music.ui.theme.PipeYellow
 import com.metrolist.music.ui.theme.MetrolistTheme
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
@@ -566,7 +568,7 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
+        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = false)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -597,7 +599,7 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+        val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.OFF)
         val isSystemInDarkTheme = isSystemInDarkTheme()
         val useDarkTheme =
             remember(darkTheme, isSystemInDarkTheme) {
@@ -616,7 +618,7 @@ class MainActivity : FragmentActivity() {
                 pureBlackEnabled && useDarkTheme
             }
 
-        val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
+        val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = PipeYellow.toArgb())
         val selectedThemeColor = Color(selectedThemeColorInt)
 
         val showChangelog = rememberSaveable { mutableStateOf(false) }
@@ -753,7 +755,7 @@ class MainActivity : FragmentActivity() {
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
-                val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
+                val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.DOWNLOADS.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {
                     try {
                         NavigationTab.valueOf(defaultOpenTabInt)
@@ -998,6 +1000,17 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
+                // Pipe Música: open the downloaded songs on launch when "Downloads" is the default tab
+                LaunchedEffect(Unit) {
+                    val openTab = dataStore.get(DefaultOpenTabKey, NavigationTab.DOWNLOADS.name)
+                    if (tabOpenedFromShortcut == null &&
+                        openTab == NavigationTab.DOWNLOADS.name &&
+                        navController.currentDestination?.route == Screens.Library.route
+                    ) {
+                        navController.navigate("auto_playlist/downloaded")
+                    }
+                }
+
                 DisposableEffect(Unit) {
                     val listener =
                         Consumer<Intent> { intent ->
@@ -1075,11 +1088,13 @@ class MainActivity : FragmentActivity() {
                                                     )
                                                 }
                                             }
-                                            IconButton(onClick = { navController.navigate("stats") }) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.stats),
-                                                    contentDescription = stringResource(R.string.stats),
-                                                )
+                                            if (PipeFeatures.STATS) {
+                                                IconButton(onClick = { navController.navigate("stats") }) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.stats),
+                                                        contentDescription = stringResource(R.string.stats),
+                                                    )
+                                                }
                                             }
                                             if (listenTogetherInTopBar) {
                                                 IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
@@ -1192,8 +1207,10 @@ class MainActivity : FragmentActivity() {
                             val onSearchLongClick: () -> Unit =
                                 remember(navController) {
                                     {
-                                        navController.navigate("recognition") {
-                                            launchSingleTop = true
+                                        if (PipeFeatures.RECOGNITION) {
+                                            navController.navigate("recognition") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     }
                                 }
@@ -1322,8 +1339,10 @@ class MainActivity : FragmentActivity() {
                             val onRailSearchLongClick: () -> Unit =
                                 remember(navController) {
                                     {
-                                        navController.navigate("recognition") {
-                                            launchSingleTop = true
+                                        if (PipeFeatures.RECOGNITION) {
+                                            navController.navigate("recognition") {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     }
                                 }
@@ -1347,6 +1366,8 @@ class MainActivity : FragmentActivity() {
                                             NavigationTab.HOME -> Screens.Home
                                             NavigationTab.SEARCH -> Screens.Search
                                             NavigationTab.LIBRARY -> Screens.Library
+                                            // Pipe Música: Downloads lives inside Library, so start there and open it below
+                                            NavigationTab.DOWNLOADS -> Screens.Library
                                         }.route,
                                     enterTransition = {
                                         val currentRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
@@ -1534,7 +1555,7 @@ class MainActivity : FragmentActivity() {
         intent: Intent,
         navController: NavHostController,
     ) {
-        if (intent.action != ACTION_RECOGNITION) return
+        if (!PipeFeatures.RECOGNITION || intent.action != ACTION_RECOGNITION) return
         val autoStart = intent.getBooleanExtra(EXTRA_AUTO_START_RECOGNITION, false)
         intent.action = null
         intent.removeExtra(EXTRA_AUTO_START_RECOGNITION)

@@ -5,6 +5,7 @@
 
 package com.metrolist.music.db
 
+import com.metrolist.music.pipe.CoverStorage
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -1790,7 +1791,9 @@ interface DatabaseDao {
             song.song.copy(
                 title = if (overwriteTitle) mediaMetadata.title else song.song.title,
                 duration = mediaMetadata.duration,
-                thumbnailUrl = mediaMetadata.thumbnailUrl,
+                // Pipe Música: keep covers the user picked
+                thumbnailUrl =
+                    if (CoverStorage.isCustomCover(song.song.thumbnailUrl)) song.song.thumbnailUrl else mediaMetadata.thumbnailUrl,
                 albumId = mediaMetadata.album?.id,
                 albumName = mediaMetadata.album?.title,
                 libraryAddToken = mediaMetadata.libraryAddToken,

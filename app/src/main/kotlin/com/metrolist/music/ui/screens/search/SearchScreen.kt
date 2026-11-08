@@ -6,6 +6,7 @@
 package com.metrolist.music.ui.screens.search
 
 import androidx.compose.foundation.layout.Box
+import com.metrolist.music.pipe.PipeFeatures
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -305,11 +306,13 @@ fun SearchScreen(
                 }
             }
 
-            HideOnScrollFAB(
-                lazyListState = lazyListState,
-                icon = R.drawable.mic,
-                onClick = { navController.navigate("recognition") },
-            )
+            if (PipeFeatures.RECOGNITION) {
+                HideOnScrollFAB(
+                    lazyListState = lazyListState,
+                    icon = R.drawable.mic,
+                    onClick = { navController.navigate("recognition") },
+                )
+            }
         }
     }
 

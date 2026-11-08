@@ -7,6 +7,12 @@
 
 package com.metrolist.music.playback
 
+import androidx.media3.extractor.ts.AdtsExtractor
+import androidx.media3.extractor.wav.WavExtractor
+import androidx.media3.extractor.ogg.OggExtractor
+import androidx.media3.extractor.flac.FlacExtractor
+import androidx.media3.extractor.mp3.Mp3Extractor
+import com.metrolist.music.pipe.LocalAwareDataSourceFactory
 import android.app.ForegroundServiceStartNotAllowedException
 import android.app.Notification
 import android.app.NotificationChannel
@@ -2213,7 +2219,7 @@ class MusicService :
                     update(song)
                     syncUtils.likeSong(song)
 
-                    if (dataStore.get(AutoDownloadOnLikeKey, false) && song.liked) {
+                    if (dataStore.get(AutoDownloadOnLikeKey, true) && song.liked) {
                         downloadUtil.download(song.id)
                     }
                 }
@@ -3989,9 +3995,20 @@ class MusicService :
         playerProvider: () -> ExoPlayer?,
     ) =
         DefaultMediaSourceFactory(
-            createDataSourceFactory(normalizationProcessor, playerProvider),
+            // Pipe Música: songs imported from the phone (content://) bypass the YouTube resolver
+            LocalAwareDataSourceFactory(this, createDataSourceFactory(normalizationProcessor, playerProvider)),
             ExtractorsFactory {
-                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor(), Mp4Extractor())
+                arrayOf(
+                    MatroskaExtractor(),
+                    FragmentedMp4Extractor(),
+                    Mp4Extractor(),
+                    // Pipe Música: formats commonly found in local audio files
+                    Mp3Extractor(),
+                    FlacExtractor(),
+                    OggExtractor(),
+                    WavExtractor(),
+                    AdtsExtractor(),
+                )
             },
         )
 

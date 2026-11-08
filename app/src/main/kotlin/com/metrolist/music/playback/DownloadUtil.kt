@@ -20,6 +20,7 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.offline.DownloadService
+import androidx.media3.exoplayer.scheduler.Requirements
 import coil3.imageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -28,6 +29,8 @@ import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertubex.extraction.ContentHints
 import com.metrolist.music.constants.AudioQuality
 import com.metrolist.music.constants.AudioQualityKey
+import com.metrolist.music.constants.AutoDownloadOnLikeKey
+import com.metrolist.music.constants.DownloadOnlyOnWifiKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.AlbumEntity
 import com.metrolist.music.db.entities.FormatEntity
@@ -38,6 +41,7 @@ import com.metrolist.music.di.PlayerCache
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.utils.InnerTubeXPlayer
+import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.enumPreference
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -48,12 +52,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.IOException
@@ -313,6 +320,46 @@ constructor(
             result.values
                 .filter { it.state == Download.STATE_COMPLETED }
                 .forEach { removeFromPlayerCache(it.request.id) }
+        }
+        observeWifiOnlySetting()
+        observeLikedSongsForAutoDownload()
+    }
+
+    // Pipe Música: only download over unmetered networks (Wi-Fi) unless the user turns it off.
+    private fun observeWifiOnlySetting() {
+        scope.launch {
+            context.dataStore.data
+                .map { it[DownloadOnlyOnWifiKey] ?: true }
+                .distinctUntilChanged()
+                .collect { wifiOnly ->
+                    val requirements = Requirements(
+                        if (wifiOnly) Requirements.NETWORK_UNMETERED else Requirements.NETWORK,
+                    )
+                    withContext(Dispatchers.Main) {
+                        downloadManager.requirements = requirements
+                    }
+                }
+        }
+    }
+
+    // Pipe Música: keep every liked song downloaded, no matter where it was liked from.
+    private fun observeLikedSongsForAutoDownload() {
+        scope.launch {
+            context.dataStore.data
+                .map { it[AutoDownloadOnLikeKey] ?: true }
+                .distinctUntilChanged()
+                .collectLatest { enabled ->
+                    if (!enabled) return@collectLatest
+                    database.likedSongsByRowIdAsc().collectLatest { likedSongs ->
+                        likedSongs
+                            .filter { !it.song.isEpisode && !it.song.isLocal }
+                            .filter { song ->
+                                val state = downloads.value[song.id]?.state
+                                state == null || state == Download.STATE_FAILED
+                            }
+                            .forEach { download(it) }
+                    }
+                }
         }
     }
 

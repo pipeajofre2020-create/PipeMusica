@@ -5,6 +5,9 @@
 
 package com.metrolist.music.ui.screens.playlist
 
+import com.metrolist.music.LocalDatabase
+import androidx.compose.material3.ExtendedFloatingActionButton
+import com.metrolist.music.pipe.LocalAudioImporter
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -232,6 +235,21 @@ fun AutoPlaylistScreen(
     var currentFileName by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
     var uploadJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    // Pipe Música: import audio files that are already on the phone
+    val pipeDatabase = LocalDatabase.current
+    val importedMessage = stringResource(R.string.pipe_import_done)
+    val importLocalLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenMultipleDocuments(),
+        ) { uris: List<Uri> ->
+            if (uris.isNotEmpty()) {
+                scope.launch {
+                    val count = LocalAudioImporter.import(context, pipeDatabase, uris)
+                    Toast.makeText(context, String.format(importedMessage, count), Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
     val filePickerLauncher =
         rememberLauncherForActivityResult(
@@ -669,6 +687,33 @@ fun AutoPlaylistScreen(
                         .align(Alignment.TopCenter)
                         .padding(LocalPlayerAwareWindowInsets.current.asPaddingValues()),
             )
+        }
+
+        // Pipe Música: import FAB on the downloads screen
+        if (playlistType == PlaylistType.DOWNLOAD && !inSelectMode) {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = state.isScrollingUp(),
+                enter = androidx.compose.animation.slideInVertically { it },
+                exit = androidx.compose.animation.slideOutVertically { it },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(
+                            LocalPlayerAwareWindowInsets.current
+                                .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                        ).padding(16.dp),
+            ) {
+                ExtendedFloatingActionButton(
+                    onClick = { importLocalLauncher.launch(LocalAudioImporter.AUDIO_MIME_TYPES) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.library_add),
+                            contentDescription = null,
+                        )
+                    },
+                    text = { Text(stringResource(R.string.pipe_import_from_phone)) },
+                )
+            }
         }
 
         // Upload FAB for uploaded playlist - positioned above mini player

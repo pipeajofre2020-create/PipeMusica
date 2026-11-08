@@ -6,6 +6,7 @@
 package com.metrolist.music.ui.screens
 
 import androidx.activity.compose.BackHandler
+import com.metrolist.music.pipe.PipeFeatures
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -1374,7 +1375,7 @@ fun HomeScreen(
 
                 if (selectedChip == null) {
                     item(key = "wrapped_card") {
-                        AnimatedVisibility(visible = shouldShowWrappedCard) {
+                        AnimatedVisibility(visible = PipeFeatures.WRAPPED && shouldShowWrappedCard) {
                             Card(
                                 modifier =
                                     Modifier
@@ -2604,8 +2605,10 @@ fun HomeScreen(
                         }
                     }
                 },
-                onRecognitionClick = {
-                    navController.navigate("recognition")
+                onRecognitionClick = if (PipeFeatures.RECOGNITION) {
+                    { navController.navigate("recognition") }
+                } else {
+                    null
                 },
             )
         }

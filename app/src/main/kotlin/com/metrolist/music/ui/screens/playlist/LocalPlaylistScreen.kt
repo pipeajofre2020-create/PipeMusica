@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.playlist
 
+import com.metrolist.music.pipe.CoverStorage
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -894,7 +895,7 @@ fun LocalPlaylistHeader(
     val overrideThumbnail = remember { mutableStateOf<String?>(null) }
     var isCustomThumbnail: Boolean =
         playlist.thumbnails.firstOrNull()?.let {
-            it.contains("studio_square_thumbnail") || it.contains("content://com.metrolist.music")
+            it.contains("studio_square_thumbnail") || it.contains("content://${context.packageName}")
         } ?: false
 
     val result = remember { mutableStateOf<Uri?>(null) }
@@ -912,7 +913,7 @@ fun LocalPlaylistHeader(
     val (darkMode, _) =
         rememberEnumPreference(
             DarkModeKey,
-            defaultValue = DarkMode.AUTO,
+            defaultValue = DarkMode.OFF,
         )
 
     val cropColor = MaterialTheme.colorScheme
@@ -923,7 +924,7 @@ fun LocalPlaylistHeader(
             ActivityResultContracts.PickVisualMedia(),
         ) { uri ->
             uri?.let { sourceUri ->
-                val destFile = java.io.File(context.cacheDir, "playlist_cover_crop_${System.currentTimeMillis()}.jpg")
+                val destFile = CoverStorage.newFile(context) // Pipe Música: keep covers out of the cache
                 val destUri = FileProvider.getUriForFile(context, "${context.packageName}.FileProvider", destFile)
                 pendingCropDestUri = destUri
 

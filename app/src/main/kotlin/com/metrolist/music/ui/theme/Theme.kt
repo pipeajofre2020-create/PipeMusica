@@ -27,6 +27,9 @@ import com.materialkolor.score.Score
 
 val DefaultThemeColor = Color(0xFFED5564)
 
+// Pipe Música brand color (same as the Yellow palette entry)
+val PipeYellow = Color(0xFFFDD835)
+
 @Composable
 fun MetrolistTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

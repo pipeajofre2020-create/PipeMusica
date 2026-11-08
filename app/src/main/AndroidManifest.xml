@@ -344,6 +344,7 @@
         <!-- Music Recognizer Widget -->
         <receiver
             android:name=".widget.MusicRecognizerWidgetReceiver"
+            android:enabled="false"
             android:exported="true"
             android:label="@string/widget_recognizer_name">
             <intent-filter>
@@ -366,6 +367,7 @@
         <!-- Music Recognizer Quick Settings Tile -->
         <service
             android:name=".quicksettings.MusicRecognizerTileService"
+            android:enabled="false"
             android:label="@string/qs_tile_music_recognizer"
             android:icon="@drawable/mic"
             android:exported="true"

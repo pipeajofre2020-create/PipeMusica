@@ -6,6 +6,7 @@
 package com.metrolist.music.ui.screens.search
 
 import androidx.activity.compose.BackHandler
+import com.metrolist.music.pipe.PipeFeatures
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -567,11 +568,13 @@ fun OnlineSearchResult(
                     pureBlack = pureBlack,
                 )
             }
-            HideOnScrollFAB(
-                lazyListState = lazyListState,
-                icon = R.drawable.mic,
-                onClick = { navController.navigate("recognition") },
-            )
+            if (PipeFeatures.RECOGNITION) {
+                HideOnScrollFAB(
+                    lazyListState = lazyListState,
+                    icon = R.drawable.mic,
+                    onClick = { navController.navigate("recognition") },
+                )
+            }
         }
     }
 }

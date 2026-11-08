@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pipe Música: textos propios de esta versión -->
+<resources>
+    <string name="pipe_downloads_tab">Descargas</string>
+    <string name="pipe_unknown_title">Audio sin título</string>
+    <string name="pipe_unknown_artist">Artista desconocido</string>
+    <string name="pipe_change_cover">Cambiar portada</string>
+    <string name="pipe_change_cover_desc">Elige una imagen de tu galería</string>
+    <string name="pipe_import_from_phone">Importar del teléfono</string>
+    <string name="pipe_import_done">%1$d canciones importadas</string>
+    <string name="pipe_wifi_only">Descargar solo con Wi-Fi</string>
+    <string name="pipe_wifi_only_desc">Las descargas esperan a que estés conectado a Wi-Fi para no gastar datos móviles</string>
+</resources>
